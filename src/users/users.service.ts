@@ -14,7 +14,7 @@ export interface CreateUserInput {
   role?: UserRole;
 }
 
-export type SafeUser = Omit<User, 'password'>;
+export type SafeUser = Omit<User, 'password' | 'refreshToken'>;
 
 @Injectable()
 export class UsersService {
@@ -53,18 +53,36 @@ export class UsersService {
     });
   }
 
-  async findById(id: string): Promise<SafeUser> {
-    const user = await this.prisma.user.findUnique({
+  async findByIdWithSecrets(id: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
       where: {
         id,
       },
     });
+  }
+
+  async findById(id: string): Promise<SafeUser> {
+    const user = await this.findByIdWithSecrets(id);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     return this.toSafeUser(user);
+  }
+
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        refreshToken,
+      },
+    });
   }
 
   async upsertAdmin(input: CreateUserInput): Promise<SafeUser> {
@@ -91,8 +109,9 @@ export class UsersService {
   }
 
   toSafeUser(user: User): SafeUser {
-    const { password, ...safeUser } = user;
+    const { password, refreshToken, ...safeUser } = user;
     void password;
+    void refreshToken;
 
     return safeUser;
   }

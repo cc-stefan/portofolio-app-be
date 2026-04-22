@@ -38,6 +38,14 @@ class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  JWT_REFRESH_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  JWT_REFRESH_EXPIRES_IN: string = '30d';
+
+  @IsOptional()
+  @IsString()
   DATABASE_URL?: string;
 }
 
@@ -56,10 +64,20 @@ export function validateEnv(config: Record<string, unknown>) {
 
   if (validatedConfig.NODE_ENV === 'test') {
     validatedConfig.JWT_SECRET ??= 'test-secret';
+    validatedConfig.JWT_REFRESH_SECRET ??= 'test-refresh-secret';
   }
 
   if (validatedConfig.NODE_ENV !== 'test' && !validatedConfig.JWT_SECRET) {
     messages.push('JWT_SECRET: JWT_SECRET is required outside tests');
+  }
+
+  if (
+    validatedConfig.NODE_ENV !== 'test' &&
+    !validatedConfig.JWT_REFRESH_SECRET
+  ) {
+    messages.push(
+      'JWT_REFRESH_SECRET: JWT_REFRESH_SECRET is required outside tests',
+    );
   }
 
   if (validatedConfig.NODE_ENV !== 'test' && !validatedConfig.DATABASE_URL) {

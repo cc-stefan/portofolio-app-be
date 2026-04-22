@@ -7,7 +7,7 @@ NestJS backend scaffold for a portfolio app. The current baseline includes:
 - PostgreSQL with Docker Compose
 - Prisma ORM
 - `User` model
-- JWT auth with Passport
+- JWT auth with Passport and refresh tokens
 
 For the ideal backend build order from zero to the current baseline, see [CONSTRUCTION_STEPS.md](/Users/ccs/development/portofolio-app/portofolio-app-be/CONSTRUCTION_STEPS.md).
 
@@ -23,7 +23,7 @@ pnpm install
 cp .env.example .env
 ```
 
-Update `JWT_SECRET` before using the API outside local development.
+Set both `JWT_SECRET` and `JWT_REFRESH_SECRET` to strong random values outside local development.
 
 ## Step 3: Start PostgreSQL
 
@@ -61,6 +61,8 @@ Swagger UI is available at `http://localhost:3001/api/docs`.
 - `GET /api/health`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/auth/me`
 - `GET /api/auth/admin/me`
 
@@ -86,6 +88,14 @@ Login:
 }
 ```
 
+Refresh:
+
+```json
+{
+  "refreshToken": "your-refresh-token"
+}
+```
+
 ## Useful commands
 
 ```bash
@@ -105,7 +115,7 @@ The command upserts a user with the `ADMIN` role. Public registration still crea
 
 ## Suggested next backend steps
 
-1. Add refresh tokens and logout flow.
-2. Add a `Project` module for portfolio entries.
-3. Add file upload support for project images.
-4. Add an admin module for dashboard actions.
+1. Add a `Project` module for portfolio entries.
+2. Add file upload support for project images.
+3. Add an admin module for dashboard actions.
+4. Add deployment configuration.

@@ -234,7 +234,21 @@ This verifies that:
 - the guard reads metadata correctly
 - `ADMIN` access is enforced
 
-## 11. Add an admin bootstrap command
+## 11. Add refresh token rotation and logout
+
+After access-token auth works, add refresh-token lifecycle management.
+
+Requirements:
+
+- store only a hashed refresh token in the database
+- issue both `accessToken` and `refreshToken` on register and login
+- add a `POST /api/auth/refresh` endpoint
+- rotate the refresh token on every refresh
+- add a `POST /api/auth/logout` endpoint that clears the stored refresh token hash
+
+This keeps the token flow production-oriented without requiring cookies yet.
+
+## 12. Add an admin bootstrap command
 
 Create a CLI command to create or promote an admin user without relying on a pre-existing admin UI.
 
@@ -255,7 +269,7 @@ This command should:
 - force the role to `ADMIN`
 - hash the provided password
 
-## 12. Add Swagger only after the API surface is stable enough
+## 13. Add Swagger only after the API surface is stable enough
 
 Wire Swagger after the current routes and DTOs exist.
 
@@ -278,7 +292,7 @@ Annotate:
 
 This gives a usable API contract instead of a partial skeleton.
 
-## 13. Keep the build output clean
+## 14. Keep the build output clean
 
 Use a dedicated Nest build config for application code only.
 
@@ -294,7 +308,7 @@ This keeps:
 - compiled output in `dist/`
 - watch mode consistent
 
-## 14. Verify every stage before moving on
+## 15. Verify every stage before moving on
 
 After each major layer, run the validation commands:
 
@@ -307,7 +321,7 @@ pnpm exec jest --config ./test/jest-e2e.json --runInBand
 
 This keeps the project stable while the architecture grows.
 
-## 15. Current baseline complete
+## 16. Current baseline complete
 
 At the end of this sequence, the backend should have:
 
@@ -317,12 +331,13 @@ At the end of this sequence, the backend should have:
 - Prisma 7 configured correctly
 - UUID user IDs
 - JWT auth
+- refresh-token rotation and logout
 - `USER` and `ADMIN` roles
 - role-based guards
 - admin bootstrap script
 - Swagger docs
 
-## 16. Next ideal construction order after this point
+## 17. Next ideal construction order after this point
 
 The next clean sequence should be:
 
