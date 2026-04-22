@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateUserInput {
@@ -11,6 +11,7 @@ export interface CreateUserInput {
   firstName?: string;
   lastName?: string;
   password: string;
+  role?: UserRole;
 }
 
 export type SafeUser = Omit<User, 'password'>;
@@ -27,6 +28,7 @@ export class UsersService {
           firstName: input.firstName,
           lastName: input.lastName,
           password: input.password,
+          role: input.role ?? UserRole.USER,
         },
       });
 
@@ -61,6 +63,29 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    return this.toSafeUser(user);
+  }
+
+  async upsertAdmin(input: CreateUserInput): Promise<SafeUser> {
+    const user = await this.prisma.user.upsert({
+      where: {
+        email: input.email.toLowerCase(),
+      },
+      update: {
+        firstName: input.firstName,
+        lastName: input.lastName,
+        password: input.password,
+        role: UserRole.ADMIN,
+      },
+      create: {
+        email: input.email.toLowerCase(),
+        firstName: input.firstName,
+        lastName: input.lastName,
+        password: input.password,
+        role: UserRole.ADMIN,
+      },
+    });
 
     return this.toSafeUser(user);
   }

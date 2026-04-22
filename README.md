@@ -52,6 +52,7 @@ pnpm start:dev
 ```
 
 The API listens on `http://localhost:3001` and uses the global prefix `/api`.
+Swagger UI is available at `http://localhost:3001/api/docs`.
 
 ## Available routes
 
@@ -59,6 +60,7 @@ The API listens on `http://localhost:3001` and uses the global prefix `/api`.
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
+- `GET /api/auth/admin/me`
 
 ## Example payloads
 
@@ -90,6 +92,14 @@ pnpm test:e2e
 pnpm prisma:studio
 pnpm db:down
 ```
+
+Create or promote an admin user:
+
+```bash
+pnpm admin:create -- --email admin@example.com --password StrongPass123 --first-name Admin --last-name User
+```
+
+The command upserts a user with the `ADMIN` role. Public registration still creates only `USER` accounts.
 
 ## Suggested next backend steps
 
