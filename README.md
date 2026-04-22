@@ -9,6 +9,8 @@ NestJS backend scaffold for a portfolio app. The current baseline includes:
 - `User` model
 - JWT auth with Passport
 
+For the ideal backend build order from zero to the current baseline, see [CONSTRUCTION_STEPS.md](/Users/ccs/development/portofolio-app/portofolio-app-be/CONSTRUCTION_STEPS.md).
+
 ## Step 1: Install dependencies
 
 ```bash
@@ -106,4 +108,4 @@ The command upserts a user with the `ADMIN` role. Public registration still crea
 1. Add refresh tokens and logout flow.
 2. Add a `Project` module for portfolio entries.
 3. Add file upload support for project images.
-4. Add role-based guards if you want an admin dashboard.
+4. Add an admin module for dashboard actions.
