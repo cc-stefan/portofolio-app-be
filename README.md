@@ -60,6 +60,7 @@ Swagger UI is available at `http://localhost:3001/api/docs`.
 ## Available routes
 
 - `GET /api/health`
+- `GET /api/admin/dashboard` (`ADMIN`)
 - `GET /api/projects`
 - `GET /api/projects/:slug`
 - `POST /api/admin/projects` (`ADMIN`)
@@ -152,5 +153,4 @@ The command upserts a user with the `ADMIN` role. Public registration still crea
 
 ## Suggested next backend steps
 
-1. Add an admin module for dashboard actions.
-2. Add deployment configuration.
+1. Add deployment configuration.

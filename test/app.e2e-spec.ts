@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { AdminService } from '../src/admin/admin.service';
 import { AppController } from '../src/app.controller';
 import { AppModule } from '../src/app.module';
 import { AuthService } from '../src/auth/auth.service';
@@ -21,6 +22,7 @@ describe('AppController (e2e)', () => {
   });
 
   it('bootstraps the application modules', () => {
+    expect(app.get(AdminService)).toBeInstanceOf(AdminService);
     expect(app.get(AuthService)).toBeInstanceOf(AuthService);
     expect(app.get(ProjectsService)).toBeInstanceOf(ProjectsService);
     expect(app.get(UsersService)).toBeInstanceOf(UsersService);
