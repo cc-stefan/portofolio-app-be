@@ -39,13 +39,13 @@ This starts a PostgreSQL 16 container on `localhost:5433`.
 pnpm prisma:generate
 ```
 
-## Step 5: Run the first migration
+## Step 5: Run the database migrations
 
 ```bash
-pnpm prisma:migrate:dev --name init
+pnpm exec prisma migrate dev
 ```
 
-This creates the `users` table defined in [prisma/schema.prisma](/Users/ccs/development/portofolio-app/portofolio-app-be/prisma/schema.prisma).
+This applies the tracked migrations for the `users` and `projects` tables defined in [prisma/schema.prisma](/Users/ccs/development/portofolio-app/portofolio-app-be/prisma/schema.prisma).
 
 ## Step 6: Start the API
 
@@ -59,6 +59,13 @@ Swagger UI is available at `http://localhost:3001/api/docs`.
 ## Available routes
 
 - `GET /api/health`
+- `GET /api/projects`
+- `GET /api/projects/:slug`
+- `POST /api/admin/projects` (`ADMIN`)
+- `GET /api/admin/projects` (`ADMIN`)
+- `GET /api/admin/projects/:id` (`ADMIN`)
+- `PATCH /api/admin/projects/:id` (`ADMIN`)
+- `DELETE /api/admin/projects/:id` (`ADMIN`)
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
@@ -96,6 +103,23 @@ Refresh:
 }
 ```
 
+Create project:
+
+```json
+{
+  "title": "Portfolio Backend",
+  "summary": "NestJS backend with Prisma, JWT auth, and admin-managed projects.",
+  "description": "A backend API for a portfolio app with public project listing endpoints and admin CRUD.",
+  "coverImageUrl": "https://cdn.example.com/projects/portfolio-backend-cover.jpg",
+  "liveUrl": "https://portfolio.example.com",
+  "repositoryUrl": "https://github.com/example/portfolio-backend",
+  "technologies": ["NestJS", "Prisma", "PostgreSQL"],
+  "featured": true,
+  "published": true,
+  "displayOrder": 1
+}
+```
+
 ## Useful commands
 
 ```bash
@@ -115,7 +139,6 @@ The command upserts a user with the `ADMIN` role. Public registration still crea
 
 ## Suggested next backend steps
 
-1. Add a `Project` module for portfolio entries.
-2. Add file upload support for project images.
-3. Add an admin module for dashboard actions.
-4. Add deployment configuration.
+1. Add file upload support for project images.
+2. Add an admin module for dashboard actions.
+3. Add deployment configuration.

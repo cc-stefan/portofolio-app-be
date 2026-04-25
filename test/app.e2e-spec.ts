@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { AppController } from '../src/app.controller';
 import { AppModule } from '../src/app.module';
 import { AuthService } from '../src/auth/auth.service';
+import { ProjectsService } from '../src/projects/projects.service';
 import { configureApp } from '../src/setup-app';
 import { UsersService } from '../src/users/users.service';
 
@@ -21,6 +22,7 @@ describe('AppController (e2e)', () => {
 
   it('bootstraps the application modules', () => {
     expect(app.get(AuthService)).toBeInstanceOf(AuthService);
+    expect(app.get(ProjectsService)).toBeInstanceOf(ProjectsService);
     expect(app.get(UsersService)).toBeInstanceOf(UsersService);
     expect(app.get(AppController).getHealth()).toEqual({
       service: 'portfolio-api',

@@ -24,3 +24,24 @@ model User {
 
   @@map("users")
 }
+
+model Project {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String
+  slug          String   @unique
+  summary       String
+  description   String?
+  coverImageUrl String?  @map("cover_image_url")
+  liveUrl       String?  @map("live_url")
+  repositoryUrl String?  @map("repository_url")
+  technologies  String[] @default([])
+  featured      Boolean  @default(false)
+  published     Boolean  @default(false)
+  displayOrder  Int      @default(0) @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([published, featured, displayOrder, createdAt])
+  @@index([featured, displayOrder, createdAt])
+  @@map("projects")
+}
