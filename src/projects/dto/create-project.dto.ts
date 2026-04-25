@@ -59,7 +59,8 @@ export class CreateProjectDto {
   slug?: string;
 
   @ApiProperty({
-    example: 'NestJS backend with Prisma, JWT auth, and admin-managed projects.',
+    example:
+      'NestJS backend with Prisma, JWT auth, and admin-managed projects.',
     maxLength: 300,
   })
   @Transform(trimProjectText)

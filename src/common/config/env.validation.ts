@@ -30,6 +30,14 @@ class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  UPLOAD_DIR: string = 'uploads';
+
+  @IsOptional()
+  @IsString()
+  UPLOAD_URL_PREFIX: string = '/uploads';
+
+  @IsOptional()
+  @IsString()
   JWT_SECRET?: string;
 
   @IsOptional()

@@ -24,6 +24,7 @@ cp .env.example .env
 ```
 
 Set both `JWT_SECRET` and `JWT_REFRESH_SECRET` to strong random values outside local development.
+Uploaded project images are stored locally under `UPLOAD_DIR` and served from `UPLOAD_URL_PREFIX`.
 
 ## Step 3: Start PostgreSQL
 
@@ -65,6 +66,8 @@ Swagger UI is available at `http://localhost:3001/api/docs`.
 - `GET /api/admin/projects` (`ADMIN`)
 - `GET /api/admin/projects/:id` (`ADMIN`)
 - `PATCH /api/admin/projects/:id` (`ADMIN`)
+- `POST /api/admin/projects/:id/cover-image` (`ADMIN`, multipart form-data)
+- `DELETE /api/admin/projects/:id/cover-image` (`ADMIN`)
 - `DELETE /api/admin/projects/:id` (`ADMIN`)
 - `POST /api/auth/register`
 - `POST /api/auth/login`
@@ -120,6 +123,16 @@ Create project:
 }
 ```
 
+Upload project cover image:
+
+```bash
+curl -X POST http://localhost:3001/api/admin/projects/<project-id>/cover-image \
+  -H "Authorization: Bearer <admin-jwt>" \
+  -F "file=@./cover-image.png"
+```
+
+Supported image types: JPEG, PNG, WEBP, GIF, and AVIF. Maximum upload size: 5 MB.
+
 ## Useful commands
 
 ```bash
@@ -139,6 +152,5 @@ The command upserts a user with the `ADMIN` role. Public registration still crea
 
 ## Suggested next backend steps
 
-1. Add file upload support for project images.
-2. Add an admin module for dashboard actions.
-3. Add deployment configuration.
+1. Add an admin module for dashboard actions.
+2. Add deployment configuration.

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, Project } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { UploadedImageFile, UploadsService } from '../uploads/uploads.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { slugifyProjectValue } from './projects.utils';
@@ -24,10 +25,16 @@ const projectOrderBy: Prisma.ProjectOrderByWithRelationInput[] = [
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploadsService: UploadsService,
+  ) {}
 
   async create(createProjectDto: CreateProjectDto): Promise<Project> {
-    const slug = this.resolveSlug(createProjectDto.title, createProjectDto.slug);
+    const slug = this.resolveSlug(
+      createProjectDto.title,
+      createProjectDto.slug,
+    );
 
     try {
       return await this.prisma.project.create({
@@ -107,7 +114,10 @@ export class ProjectsService {
     }
 
     if (updateProjectDto.slug !== undefined) {
-      data.slug = this.resolveSlug(existingProject.title, updateProjectDto.slug);
+      data.slug = this.resolveSlug(
+        existingProject.title,
+        updateProjectDto.slug,
+      );
     }
 
     if (updateProjectDto.summary !== undefined) {
@@ -151,24 +161,90 @@ export class ProjectsService {
     }
 
     try {
-      return await this.prisma.project.update({
+      const updatedProject = await this.prisma.project.update({
         where: {
           id,
         },
         data,
       });
+
+      if (
+        updateProjectDto.coverImageUrl !== undefined &&
+        updateProjectDto.coverImageUrl !== existingProject.coverImageUrl
+      ) {
+        await this.cleanupManagedFile(existingProject.coverImageUrl);
+      }
+
+      return updatedProject;
+    } catch (error) {
+      this.handleProjectPersistenceError(error);
+    }
+  }
+
+  async uploadCoverImage(
+    id: string,
+    file: UploadedImageFile | undefined,
+  ): Promise<Project> {
+    if (!file) {
+      throw new BadRequestException('Project image file is required');
+    }
+
+    const existingProject = await this.findOneAdmin(id);
+    const storedUpload = await this.uploadsService.saveProjectImage(
+      existingProject.slug,
+      file,
+    );
+
+    try {
+      const updatedProject = await this.prisma.project.update({
+        where: {
+          id,
+        },
+        data: {
+          coverImageUrl: storedUpload.url,
+        },
+      });
+
+      await this.cleanupManagedFile(existingProject.coverImageUrl);
+
+      return updatedProject;
+    } catch (error) {
+      await this.uploadsService.deleteManagedFile(storedUpload.url);
+      this.handleProjectPersistenceError(error);
+    }
+  }
+
+  async removeCoverImage(id: string): Promise<Project> {
+    const existingProject = await this.findOneAdmin(id);
+
+    try {
+      const updatedProject = await this.prisma.project.update({
+        where: {
+          id,
+        },
+        data: {
+          coverImageUrl: null,
+        },
+      });
+
+      await this.cleanupManagedFile(existingProject.coverImageUrl);
+
+      return updatedProject;
     } catch (error) {
       this.handleProjectPersistenceError(error);
     }
   }
 
   async remove(id: string): Promise<void> {
+    const existingProject = await this.findOneAdmin(id);
+
     try {
       await this.prisma.project.delete({
         where: {
           id,
         },
       });
+      await this.cleanupManagedFile(existingProject.coverImageUrl);
     } catch (error) {
       this.handleProjectPersistenceError(error);
     }
@@ -208,5 +284,15 @@ export class ProjectsService {
     }
 
     throw error;
+  }
+
+  private async cleanupManagedFile(
+    fileUrl: string | null | undefined,
+  ): Promise<void> {
+    try {
+      await this.uploadsService.deleteManagedFile(fileUrl);
+    } catch {
+      return;
+    }
   }
 }
