@@ -9,7 +9,7 @@ NestJS backend scaffold for a portfolio app. The current baseline includes:
 - `User` model
 - JWT auth with Passport and refresh tokens
 
-For the ideal backend build order from zero to the current baseline, see [CONSTRUCTION_STEPS.md](/Users/ccs/development/portofolio-app/portofolio-app-be/CONSTRUCTION_STEPS.md).
+For the ideal backend build order from zero to the current baseline, see [CONSTRUCTION_STEPS.md](/Users/ccs/development/portfolio/portfolio-app-be/CONSTRUCTION_STEPS.md).
 
 ## Step 1: Install dependencies
 
@@ -46,7 +46,7 @@ pnpm prisma:generate
 pnpm exec prisma migrate dev
 ```
 
-This applies the tracked migrations for the `users` and `projects` tables defined in [prisma/schema.prisma](/Users/ccs/development/portofolio-app/portofolio-app-be/prisma/schema.prisma).
+This applies the tracked migrations for the `users` and `projects` tables defined in [prisma/schema.prisma](/Users/ccs/development/portfolio/portfolio-app-be/prisma/schema.prisma).
 
 ## Step 6: Start the API
 
@@ -55,7 +55,7 @@ pnpm start:dev
 ```
 
 The API listens on `http://localhost:3001` and uses the global prefix `/api`.
-Swagger UI is available at `http://localhost:3001/api/docs`.
+Swagger UI is available at [http://localhost:3001/api/docs](http://localhost:3001/api/docs).
 
 ## Available routes
 

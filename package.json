@@ -1,5 +1,5 @@
 {
-  "name": "portofolio-app-be",
+  "name": "portfolio-app-be",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -78,6 +78,18 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "bcrypt",
+      "prisma"
+    ],
+    "ignoredBuiltDependencies": [
+      "@nestjs/core",
+      "@scarf/scarf",
+      "unrs-resolver"
+    ]
   },
   "jest": {
     "moduleFileExtensions": [

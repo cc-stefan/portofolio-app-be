@@ -7,7 +7,7 @@ This is the clean construction order for this backend from zero to the current b
 Start with a plain NestJS app using `pnpm`.
 
 ```bash
-pnpm create nestjs portofolio-app-be
+pnpm create nestjs portfolio-app-be
 ```
 
 Keep the initial structure small:
