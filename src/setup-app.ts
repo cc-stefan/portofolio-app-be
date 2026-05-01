@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { createValidationExceptionFactory } from './common/validation/validation-exception.factory';
 import {
   getUploadsRootPath,
   getUploadsUrlPrefix,
@@ -25,6 +26,7 @@ export function configureApp(app: INestApplication): void {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      exceptionFactory: createValidationExceptionFactory(),
       transformOptions: {
         enableImplicitConversion: true,
       },

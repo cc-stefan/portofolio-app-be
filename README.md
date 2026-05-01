@@ -6,8 +6,10 @@ NestJS backend scaffold for a portfolio app. The current baseline includes:
 - global request validation
 - PostgreSQL with Docker Compose
 - Prisma ORM
-- `User` model
+- `User`, `Project`, and `Inquiry` models
 - JWT auth with Passport and refresh tokens
+- public inquiry intake for the portfolio contact form
+- admin inquiry inbox endpoints
 
 For the ideal backend build order from zero to the current baseline, see [CONSTRUCTION_STEPS.md](/Users/ccs/development/portfolio/portfolio-app-be/CONSTRUCTION_STEPS.md).
 
@@ -46,7 +48,7 @@ pnpm prisma:generate
 pnpm exec prisma migrate dev
 ```
 
-This applies the tracked migrations for the `users` and `projects` tables defined in [prisma/schema.prisma](/Users/ccs/development/portfolio/portfolio-app-be/prisma/schema.prisma).
+This applies the tracked migrations for the `users`, `projects`, and `inquiries` tables and the `InquiryStatus` enum defined in [prisma/schema.prisma](/Users/ccs/development/portfolio/portfolio-app-be/prisma/schema.prisma).
 
 ## Step 6: Start the API
 
@@ -60,6 +62,11 @@ Swagger UI is available at [http://localhost:3001/api/docs](http://localhost:300
 ## Available routes
 
 - `GET /api/health`
+- `POST /api/inquiries`
+- `GET /api/admin/inquiries` (`ADMIN`)
+- `GET /api/admin/inquiries/:id` (`ADMIN`)
+- `PATCH /api/admin/inquiries/:id` (`ADMIN`)
+- `DELETE /api/admin/inquiries/:id` (`ADMIN`)
 - `GET /api/admin/dashboard` (`ADMIN`)
 - `GET /api/projects`
 - `GET /api/projects/:slug`
@@ -107,6 +114,26 @@ Refresh:
 }
 ```
 
+Create inquiry:
+
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "message": "I would like to discuss a backend-focused role and a potential contract engagement."
+}
+```
+
+Update inquiry admin state:
+
+```json
+{
+  "status": "IN_REVIEW",
+  "isRead": true,
+  "adminNotes": "Followed up and waiting for a reply."
+}
+```
+
 Create project:
 
 ```json
@@ -133,6 +160,28 @@ curl -X POST http://localhost:3001/api/admin/projects/<project-id>/cover-image \
 ```
 
 Supported image types: JPEG, PNG, WEBP, GIF, and AVIF. Maximum upload size: 5 MB.
+
+## Validation errors
+
+Request validation uses the global NestJS validation pipe with field-level error output that maps cleanly back to frontend form fields.
+
+Example `400` response:
+
+```json
+{
+  "message": "Validation failed",
+  "errors": [
+    {
+      "path": ["email"],
+      "message": "email must be an email"
+    },
+    {
+      "path": ["message"],
+      "message": "message must be longer than or equal to 24 characters"
+    }
+  ]
+}
+```
 
 ## Useful commands
 

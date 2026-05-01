@@ -11,6 +11,13 @@ enum UserRole {
   ADMIN
 }
 
+enum InquiryStatus {
+  NEW
+  IN_REVIEW
+  RESOLVED
+  ARCHIVED
+}
+
 model User {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String   @unique
@@ -44,4 +51,19 @@ model Project {
   @@index([published, featured, displayOrder, createdAt])
   @@index([featured, displayOrder, createdAt])
   @@map("projects")
+}
+
+model Inquiry {
+  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  email      String
+  message    String
+  status     InquiryStatus @default(NEW)
+  isRead     Boolean       @default(false) @map("is_read")
+  adminNotes String?       @map("admin_notes")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("inquiries")
 }
