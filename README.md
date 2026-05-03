@@ -11,7 +11,7 @@ NestJS backend scaffold for a portfolio app. The current baseline includes:
 - public inquiry intake for the portfolio contact form
 - admin inquiry inbox endpoints
 
-For the ideal backend build order from zero to the current baseline, see [CONSTRUCTION_STEPS.md](/Users/ccs/development/portfolio/portfolio-app-be/CONSTRUCTION_STEPS.md).
+For the ideal backend build order from zero to the current baseline, see [CONSTRUCTION_STEPS.md](/Users/ccs/development/portfolio-app/portfolio-app-be/CONSTRUCTION_STEPS.md).
 
 ## Step 1: Install dependencies
 
@@ -48,9 +48,17 @@ pnpm prisma:generate
 pnpm exec prisma migrate dev
 ```
 
-This applies the tracked migrations for the `users`, `projects`, and `inquiries` tables and the `InquiryStatus` enum defined in [prisma/schema.prisma](/Users/ccs/development/portfolio/portfolio-app-be/prisma/schema.prisma).
+This applies the tracked migrations for the `users`, `projects`, and `inquiries` tables and the `InquiryStatus` enum defined in [prisma/schema.prisma](/Users/ccs/development/portfolio-app/portfolio-app-be/prisma/schema.prisma).
 
-## Step 6: Start the API
+## Step 6: Seed local data
+
+```bash
+docker exec -i portfolio-postgres psql -U postgres -d portfolio_app -v ON_ERROR_STOP=1 < scripts/seed.sql
+```
+
+This creates the baseline admin user and the CV-backed portfolio projects used by the public frontend.
+
+## Step 7: Start the API
 
 ```bash
 pnpm start:dev
@@ -138,13 +146,13 @@ Create project:
 
 ```json
 {
-  "title": "Portfolio Backend",
-  "summary": "NestJS backend with Prisma, JWT auth, and admin-managed projects.",
-  "description": "A backend API for a portfolio app with public project listing endpoints and admin CRUD.",
-  "coverImageUrl": "https://cdn.example.com/projects/portfolio-backend-cover.jpg",
-  "liveUrl": "https://portfolio.example.com",
-  "repositoryUrl": "https://github.com/example/portfolio-backend",
-  "technologies": ["NestJS", "Prisma", "PostgreSQL"],
+  "title": "E-Transport Management System",
+  "summary": "Cargo transportation web app for route planning, operations, billing, and profit-and-loss reporting.",
+  "description": "Project completed between August 2022 and November 2022. The system supports cargo transportation route planning, operational tracking, billing workflows, and profit-and-loss reporting through a user-friendly React interface.",
+  "coverImageUrl": null,
+  "liveUrl": null,
+  "repositoryUrl": null,
+  "technologies": ["HTML", "CSS", "TypeScript", "React", "Material UI"],
   "featured": true,
   "published": true,
   "displayOrder": 1
