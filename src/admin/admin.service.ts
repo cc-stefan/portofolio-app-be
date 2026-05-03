@@ -8,7 +8,7 @@ const recentProjectsSelect = {
   slug: true,
   published: true,
   featured: true,
-  coverImageUrl: true,
+  imageUrl: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.ProjectSelect;
@@ -51,7 +51,7 @@ export class AdminService {
       }),
       this.prisma.project.count({
         where: {
-          coverImageUrl: {
+          imageUrl: {
             not: null,
           },
         },

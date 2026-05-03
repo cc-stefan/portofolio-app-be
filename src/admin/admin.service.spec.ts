@@ -40,7 +40,7 @@ describe('AdminService', () => {
         slug: 'portfolio-backend',
         published: true,
         featured: true,
-        coverImageUrl: '/uploads/project-images/portfolio-backend.png',
+        imageUrl: '/uploads/project-images/portfolio-backend.png',
         createdAt: new Date('2026-04-25T09:00:00.000Z'),
         updatedAt: new Date('2026-04-26T09:00:00.000Z'),
       },
@@ -81,7 +81,7 @@ describe('AdminService', () => {
     });
     expect(prismaService.project.count).toHaveBeenNthCalledWith(4, {
       where: {
-        coverImageUrl: {
+        imageUrl: {
           not: null,
         },
       },
@@ -101,7 +101,7 @@ describe('AdminService', () => {
         slug: true,
         published: true,
         featured: true,
-        coverImageUrl: true,
+        imageUrl: true,
         createdAt: true,
         updatedAt: true,
       },

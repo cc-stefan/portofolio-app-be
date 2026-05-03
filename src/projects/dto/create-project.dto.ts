@@ -1,6 +1,7 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
 import {
   ArrayMaxSize,
+  IsDateString,
   IsArray,
   IsBoolean,
   IsInt,
@@ -82,15 +83,13 @@ export class CreateProjectDto {
   description?: string | null;
 
   @ApiPropertyOptional({
-    example: 'https://cdn.example.com/projects/portfolio-backend-cover.jpg',
+    example: '2024-05-20',
     nullable: true,
-    maxLength: 500,
   })
   @IsOptional()
   @Transform(trimOptionalProjectText)
-  @IsString()
-  @MaxLength(500)
-  coverImageUrl?: string | null;
+  @IsDateString()
+  projectDate?: string | null;
 
   @ApiPropertyOptional({
     example: 'https://portfolio.example.com',

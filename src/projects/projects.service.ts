@@ -43,7 +43,8 @@ export class ProjectsService {
           slug,
           summary: createProjectDto.summary,
           description: createProjectDto.description ?? null,
-          coverImageUrl: createProjectDto.coverImageUrl ?? null,
+          projectDate:
+            this.parseProjectDate(createProjectDto.projectDate) ?? null,
           liveUrl: createProjectDto.liveUrl ?? null,
           repositoryUrl: createProjectDto.repositoryUrl ?? null,
           technologies: createProjectDto.technologies ?? [],
@@ -128,8 +129,8 @@ export class ProjectsService {
       data.description = updateProjectDto.description;
     }
 
-    if (updateProjectDto.coverImageUrl !== undefined) {
-      data.coverImageUrl = updateProjectDto.coverImageUrl;
+    if (updateProjectDto.projectDate !== undefined) {
+      data.projectDate = this.parseProjectDate(updateProjectDto.projectDate);
     }
 
     if (updateProjectDto.liveUrl !== undefined) {
@@ -168,20 +169,13 @@ export class ProjectsService {
         data,
       });
 
-      if (
-        updateProjectDto.coverImageUrl !== undefined &&
-        updateProjectDto.coverImageUrl !== existingProject.coverImageUrl
-      ) {
-        await this.cleanupManagedFile(existingProject.coverImageUrl);
-      }
-
       return updatedProject;
     } catch (error) {
       this.handleProjectPersistenceError(error);
     }
   }
 
-  async uploadCoverImage(
+  async uploadImage(
     id: string,
     file: UploadedImageFile | undefined,
   ): Promise<Project> {
@@ -201,11 +195,11 @@ export class ProjectsService {
           id,
         },
         data: {
-          coverImageUrl: storedUpload.url,
+          imageUrl: storedUpload.url,
         },
       });
 
-      await this.cleanupManagedFile(existingProject.coverImageUrl);
+      await this.cleanupManagedFile(existingProject.imageUrl);
 
       return updatedProject;
     } catch (error) {
@@ -214,7 +208,7 @@ export class ProjectsService {
     }
   }
 
-  async removeCoverImage(id: string): Promise<Project> {
+  async removeImage(id: string): Promise<Project> {
     const existingProject = await this.findOneAdmin(id);
 
     try {
@@ -223,11 +217,11 @@ export class ProjectsService {
           id,
         },
         data: {
-          coverImageUrl: null,
+          imageUrl: null,
         },
       });
 
-      await this.cleanupManagedFile(existingProject.coverImageUrl);
+      await this.cleanupManagedFile(existingProject.imageUrl);
 
       return updatedProject;
     } catch (error) {
@@ -244,7 +238,7 @@ export class ProjectsService {
           id,
         },
       });
-      await this.cleanupManagedFile(existingProject.coverImageUrl);
+      await this.cleanupManagedFile(existingProject.imageUrl);
     } catch (error) {
       this.handleProjectPersistenceError(error);
     }
@@ -284,6 +278,20 @@ export class ProjectsService {
     }
 
     throw error;
+  }
+
+  private parseProjectDate(
+    value: string | null | undefined,
+  ): Date | null | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+
+    if (value === null) {
+      return null;
+    }
+
+    return new Date(value);
   }
 
   private async cleanupManagedFile(

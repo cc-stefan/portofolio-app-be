@@ -22,8 +22,14 @@ export class ProjectResponseDto {
 
   @ApiPropertyOptional({
     nullable: true,
+    example: '2024-05-20T00:00:00.000Z',
   })
-  coverImageUrl?: string | null;
+  projectDate?: Date | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+  })
+  imageUrl?: string | null;
 
   @ApiPropertyOptional({
     nullable: true,

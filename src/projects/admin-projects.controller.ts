@@ -92,7 +92,7 @@ export class AdminProjectsController {
     return this.projectsService.update(id, updateProjectDto);
   }
 
-  @Post(':id/cover-image')
+  @Post(':id/image')
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -104,17 +104,17 @@ export class AdminProjectsController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadProjectImageDto })
   @ApiOkResponse({ type: ProjectResponseDto })
-  uploadCoverImage(
+  uploadImage(
     @Param('id', new ParseUUIDPipe()) id: string,
     @UploadedFile() file: UploadedImageFile | undefined,
   ) {
-    return this.projectsService.uploadCoverImage(id, file);
+    return this.projectsService.uploadImage(id, file);
   }
 
-  @Delete(':id/cover-image')
+  @Delete(':id/image')
   @ApiOkResponse({ type: ProjectResponseDto })
-  removeCoverImage(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.projectsService.removeCoverImage(id);
+  removeImage(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.projectsService.removeImage(id);
   }
 
   @Delete(':id')

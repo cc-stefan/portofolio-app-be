@@ -48,7 +48,7 @@ export class AdminDashboardProjectDto {
   @ApiPropertyOptional({
     nullable: true,
   })
-  coverImageUrl?: string | null;
+  imageUrl?: string | null;
 
   @ApiProperty()
   createdAt: Date;

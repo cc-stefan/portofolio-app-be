@@ -48,9 +48,10 @@ describe('ProjectsService', () => {
       slug: 'portfolio-backend',
       summary: 'API summary',
       description: null,
-      coverImageUrl: null,
+      imageUrl: null,
       liveUrl: null,
       repositoryUrl: null,
+      projectDate: new Date('2024-05-20T00:00:00.000Z'),
       technologies: ['NestJS', 'Prisma'],
       featured: true,
       published: false,
@@ -63,6 +64,7 @@ describe('ProjectsService', () => {
     const result = await service.create({
       title: 'Portfolio Backend',
       summary: 'API summary',
+      projectDate: '2024-05-20T00:00:00.000Z',
       technologies: ['NestJS', 'Prisma'],
       featured: true,
       displayOrder: 2,
@@ -74,7 +76,7 @@ describe('ProjectsService', () => {
         slug: 'portfolio-backend',
         summary: 'API summary',
         description: null,
-        coverImageUrl: null,
+        projectDate: new Date('2024-05-20T00:00:00.000Z'),
         liveUrl: null,
         repositoryUrl: null,
         technologies: ['NestJS', 'Prisma'],
@@ -118,9 +120,10 @@ describe('ProjectsService', () => {
       slug: 'portfolio-backend',
       summary: 'API summary',
       description: null,
-      coverImageUrl: null,
+      imageUrl: null,
       liveUrl: null,
       repositoryUrl: null,
+      projectDate: null,
       technologies: [],
       featured: false,
       published: false,
@@ -136,16 +139,64 @@ describe('ProjectsService', () => {
     expect(result).toEqual(existingProject);
   });
 
-  it('uploads a cover image, updates the project, and deletes the previous managed file', async () => {
+  it('maps nullable fields when updating a project', async () => {
+    const existingProject = {
+      id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
+      title: 'Portfolio Backend',
+      slug: 'portfolio-backend',
+      summary: 'API summary',
+      description: 'Old description',
+      imageUrl: null,
+      liveUrl: 'https://portfolio.example.com',
+      repositoryUrl: 'https://github.com/example/portfolio-backend',
+      projectDate: new Date('2024-05-20T00:00:00.000Z'),
+      technologies: ['NestJS'],
+      featured: false,
+      published: false,
+      displayOrder: 0,
+      createdAt: new Date('2026-04-25T09:00:00.000Z'),
+      updatedAt: new Date('2026-04-25T09:00:00.000Z'),
+    };
+    prismaService.project.findUnique.mockResolvedValue(existingProject);
+    prismaService.project.update.mockResolvedValue({
+      ...existingProject,
+      description: null,
+      liveUrl: null,
+      repositoryUrl: null,
+      projectDate: null,
+    });
+
+    await service.update(existingProject.id, {
+      description: null,
+      liveUrl: null,
+      repositoryUrl: null,
+      projectDate: null,
+    });
+
+    expect(prismaService.project.update).toHaveBeenCalledWith({
+      where: {
+        id: existingProject.id,
+      },
+      data: {
+        description: null,
+        liveUrl: null,
+        repositoryUrl: null,
+        projectDate: null,
+      },
+    });
+  });
+
+  it('uploads a project image, updates the project, and deletes the previous managed file', async () => {
     const existingProject = {
       id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
       title: 'Portfolio Backend',
       slug: 'portfolio-backend',
       summary: 'API summary',
       description: null,
-      coverImageUrl: '/uploads/project-images/old-file.png',
+      imageUrl: '/uploads/project-images/old-file.png',
       liveUrl: null,
       repositoryUrl: null,
+      projectDate: null,
       technologies: [],
       featured: false,
       published: false,
@@ -155,7 +206,7 @@ describe('ProjectsService', () => {
     };
     const updatedProject = {
       ...existingProject,
-      coverImageUrl: '/uploads/project-images/new-file.png',
+      imageUrl: '/uploads/project-images/new-file.png',
     };
 
     prismaService.project.findUnique.mockResolvedValue(existingProject);
@@ -166,7 +217,7 @@ describe('ProjectsService', () => {
     });
     uploadsService.deleteManagedFile.mockResolvedValue(true);
 
-    const result = await service.uploadCoverImage(existingProject.id, {
+    const result = await service.uploadImage(existingProject.id, {
       buffer: Buffer.from('image-bytes'),
       mimetype: 'image/png',
       originalname: 'cover.png',
@@ -184,7 +235,7 @@ describe('ProjectsService', () => {
         id: existingProject.id,
       },
       data: {
-        coverImageUrl: '/uploads/project-images/new-file.png',
+        imageUrl: '/uploads/project-images/new-file.png',
       },
     });
     expect(uploadsService.deleteManagedFile).toHaveBeenCalledWith(
@@ -193,16 +244,17 @@ describe('ProjectsService', () => {
     expect(result).toEqual(updatedProject);
   });
 
-  it('removes the cover image and clears the stored URL', async () => {
+  it('removes the project image and clears the stored URL', async () => {
     const existingProject = {
       id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
       title: 'Portfolio Backend',
       slug: 'portfolio-backend',
       summary: 'API summary',
       description: null,
-      coverImageUrl: '/uploads/project-images/old-file.png',
+      imageUrl: '/uploads/project-images/old-file.png',
       liveUrl: null,
       repositoryUrl: null,
+      projectDate: null,
       technologies: [],
       featured: false,
       published: false,
@@ -213,23 +265,23 @@ describe('ProjectsService', () => {
     prismaService.project.findUnique.mockResolvedValue(existingProject);
     prismaService.project.update.mockResolvedValue({
       ...existingProject,
-      coverImageUrl: null,
+      imageUrl: null,
     });
     uploadsService.deleteManagedFile.mockResolvedValue(true);
 
-    const result = await service.removeCoverImage(existingProject.id);
+    const result = await service.removeImage(existingProject.id);
 
     expect(prismaService.project.update).toHaveBeenCalledWith({
       where: {
         id: existingProject.id,
       },
       data: {
-        coverImageUrl: null,
+        imageUrl: null,
       },
     });
     expect(uploadsService.deleteManagedFile).toHaveBeenCalledWith(
-      existingProject.coverImageUrl,
+      existingProject.imageUrl,
     );
-    expect(result.coverImageUrl).toBeNull();
+    expect(result.imageUrl).toBeNull();
   });
 });
