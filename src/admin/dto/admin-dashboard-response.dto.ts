@@ -1,5 +1,6 @@
 import { UserRole } from '@prisma/client';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ProjectTranslationResponseDto } from '../../projects/dto/project-translation.dto';
 
 export class AdminDashboardStatsDto {
   @ApiProperty()
@@ -34,9 +35,6 @@ export class AdminDashboardProjectDto {
   id: string;
 
   @ApiProperty()
-  title: string;
-
-  @ApiProperty()
   slug: string;
 
   @ApiProperty()
@@ -55,6 +53,12 @@ export class AdminDashboardProjectDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiProperty({
+    type: ProjectTranslationResponseDto,
+    isArray: true,
+  })
+  translations: ProjectTranslationResponseDto[];
 }
 
 export class AdminDashboardUserDto {

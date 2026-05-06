@@ -1,6 +1,8 @@
-import { Transform, type TransformFnParams } from 'class-transformer';
+import { Transform, Type, type TransformFnParams } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
+  ArrayUnique,
   IsDateString,
   IsArray,
   IsBoolean,
@@ -11,18 +13,19 @@ import {
   MaxLength,
   Min,
   MinLength,
+  Validate,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   normalizeOptionalProjectText,
   normalizeProjectSlug,
   normalizeProjectStringArray,
-  normalizeProjectText,
 } from '../projects.utils';
-
-function trimProjectText({ value }: TransformFnParams): unknown {
-  return normalizeProjectText(value);
-}
+import {
+  HasDefaultProjectLocaleConstraint,
+  ProjectTranslationInputDto,
+} from './project-translation.dto';
 
 function trimOptionalProjectText({ value }: TransformFnParams): unknown {
   return normalizeOptionalProjectText(value);
@@ -38,14 +41,16 @@ function trimProjectTechnologies({ value }: TransformFnParams): unknown {
 
 export class CreateProjectDto {
   @ApiProperty({
-    example: 'Portfolio Backend',
-    maxLength: 120,
+    type: [ProjectTranslationInputDto],
+    minItems: 1,
   })
-  @Transform(trimProjectText)
-  @IsString()
-  @MinLength(1)
-  @MaxLength(120)
-  title: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique((translation: ProjectTranslationInputDto) => translation.locale)
+  @ValidateNested({ each: true })
+  @Type(() => ProjectTranslationInputDto)
+  @Validate(HasDefaultProjectLocaleConstraint)
+  translations: ProjectTranslationInputDto[];
 
   @ApiPropertyOptional({
     example: 'portfolio-backend',
@@ -58,29 +63,6 @@ export class CreateProjectDto {
   @MaxLength(160)
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
   slug?: string;
-
-  @ApiProperty({
-    example:
-      'NestJS backend with Prisma, JWT auth, and admin-managed projects.',
-    maxLength: 300,
-  })
-  @Transform(trimProjectText)
-  @IsString()
-  @MinLength(1)
-  @MaxLength(300)
-  summary: string;
-
-  @ApiPropertyOptional({
-    example:
-      'A backend API for a portfolio app with public project listing endpoints and admin CRUD.',
-    nullable: true,
-    maxLength: 5000,
-  })
-  @IsOptional()
-  @Transform(trimOptionalProjectText)
-  @IsString()
-  @MaxLength(5000)
-  description?: string | null;
 
   @ApiPropertyOptional({
     example: '2024-05-20',

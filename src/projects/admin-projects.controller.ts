@@ -30,7 +30,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UploadedImageFile } from '../uploads/uploads.service';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { ProjectResponseDto } from './dto/project-response.dto';
+import { AdminProjectResponseDto } from './dto/project-response.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UploadProjectImageDto } from './dto/upload-project-image.dto';
 import { ProjectsService } from './projects.service';
@@ -66,25 +66,25 @@ export class AdminProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
-  @ApiCreatedResponse({ type: ProjectResponseDto })
+  @ApiCreatedResponse({ type: AdminProjectResponseDto })
   create(@Body() createProjectDto: CreateProjectDto) {
     return this.projectsService.create(createProjectDto);
   }
 
   @Get()
-  @ApiOkResponse({ type: ProjectResponseDto, isArray: true })
+  @ApiOkResponse({ type: AdminProjectResponseDto, isArray: true })
   findAll() {
     return this.projectsService.findAllAdmin();
   }
 
   @Get(':id')
-  @ApiOkResponse({ type: ProjectResponseDto })
+  @ApiOkResponse({ type: AdminProjectResponseDto })
   findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.projectsService.findOneAdmin(id);
   }
 
   @Patch(':id')
-  @ApiOkResponse({ type: ProjectResponseDto })
+  @ApiOkResponse({ type: AdminProjectResponseDto })
   update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() updateProjectDto: UpdateProjectDto,
@@ -103,7 +103,7 @@ export class AdminProjectsController {
   )
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadProjectImageDto })
-  @ApiOkResponse({ type: ProjectResponseDto })
+  @ApiOkResponse({ type: AdminProjectResponseDto })
   uploadImage(
     @Param('id', new ParseUUIDPipe()) id: string,
     @UploadedFile() file: UploadedImageFile | undefined,
@@ -112,7 +112,7 @@ export class AdminProjectsController {
   }
 
   @Delete(':id/image')
-  @ApiOkResponse({ type: ProjectResponseDto })
+  @ApiOkResponse({ type: AdminProjectResponseDto })
   removeImage(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.projectsService.removeImage(id);
   }

@@ -1,10 +1,5 @@
 import { Transform, type TransformFnParams } from 'class-transformer';
-import {
-  IsEmail,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 function trimString({ value }: TransformFnParams): unknown {

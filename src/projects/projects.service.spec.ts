@@ -4,6 +4,20 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { ProjectsService } from './projects.service';
 
+const projectTranslationsInclude = {
+  translations: {
+    select: {
+      locale: true,
+      title: true,
+      summary: true,
+      description: true,
+    },
+    orderBy: {
+      locale: 'asc',
+    },
+  },
+};
+
 describe('ProjectsService', () => {
   let service: ProjectsService;
   const prismaService = {
@@ -44,10 +58,15 @@ describe('ProjectsService', () => {
   it('creates a project and derives the slug from the title', async () => {
     const createdProject = {
       id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
-      title: 'Portfolio Backend',
       slug: 'portfolio-backend',
-      summary: 'API summary',
-      description: null,
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'API summary',
+          description: null,
+        },
+      ],
       imageUrl: null,
       liveUrl: null,
       repositoryUrl: null,
@@ -62,8 +81,13 @@ describe('ProjectsService', () => {
     prismaService.project.create.mockResolvedValue(createdProject);
 
     const result = await service.create({
-      title: 'Portfolio Backend',
-      summary: 'API summary',
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'API summary',
+        },
+      ],
       projectDate: '2024-05-20T00:00:00.000Z',
       technologies: ['NestJS', 'Prisma'],
       featured: true,
@@ -72,10 +96,17 @@ describe('ProjectsService', () => {
 
     expect(prismaService.project.create).toHaveBeenCalledWith({
       data: {
-        title: 'Portfolio Backend',
         slug: 'portfolio-backend',
-        summary: 'API summary',
-        description: null,
+        translations: {
+          create: [
+            {
+              locale: 'en',
+              title: 'Portfolio Backend',
+              summary: 'API summary',
+              description: null,
+            },
+          ],
+        },
         projectDate: new Date('2024-05-20T00:00:00.000Z'),
         liveUrl: null,
         repositoryUrl: null,
@@ -84,14 +115,44 @@ describe('ProjectsService', () => {
         published: false,
         displayOrder: 2,
       },
+      include: projectTranslationsInclude,
     });
     expect(result).toEqual(createdProject);
   });
 
-  it('lists only published projects for the public API', async () => {
-    prismaService.project.findMany.mockResolvedValue([]);
+  it('lists only published projects for the public API and localizes the content', async () => {
+    prismaService.project.findMany.mockResolvedValue([
+      {
+        id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
+        slug: 'portfolio-backend',
+        translations: [
+          {
+            locale: 'en',
+            title: 'Portfolio Backend',
+            summary: 'English summary',
+            description: null,
+          },
+          {
+            locale: 'ro',
+            title: 'Backend portofoliu',
+            summary: 'Rezumat in romana',
+            description: 'Descriere in romana',
+          },
+        ],
+        imageUrl: null,
+        liveUrl: null,
+        repositoryUrl: null,
+        projectDate: null,
+        technologies: ['NestJS'],
+        featured: false,
+        published: true,
+        displayOrder: 0,
+        createdAt: new Date('2026-04-25T09:00:00.000Z'),
+        updatedAt: new Date('2026-04-25T09:00:00.000Z'),
+      },
+    ]);
 
-    await service.findAllPublished();
+    const result = await service.findAllPublished('ro');
 
     expect(prismaService.project.findMany).toHaveBeenCalledWith({
       where: {
@@ -102,7 +163,17 @@ describe('ProjectsService', () => {
         { displayOrder: 'asc' },
         { createdAt: 'desc' },
       ],
+      include: projectTranslationsInclude,
     });
+    expect(result).toEqual([
+      expect.objectContaining({
+        title: 'Backend portofoliu',
+        summary: 'Rezumat in romana',
+        description: 'Descriere in romana',
+        contentLocale: 'ro',
+        availableLocales: ['en', 'ro'],
+      }),
+    ]);
   });
 
   it('throws when a published project cannot be found by slug', async () => {
@@ -113,13 +184,62 @@ describe('ProjectsService', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('falls back to the default locale when the requested translation is missing', async () => {
+    prismaService.project.findFirst.mockResolvedValue({
+      id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
+      slug: 'portfolio-backend',
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'API summary',
+          description: null,
+        },
+      ],
+      imageUrl: null,
+      liveUrl: null,
+      repositoryUrl: null,
+      projectDate: null,
+      technologies: ['NestJS'],
+      featured: false,
+      published: true,
+      displayOrder: 0,
+      createdAt: new Date('2026-04-25T09:00:00.000Z'),
+      updatedAt: new Date('2026-04-25T09:00:00.000Z'),
+    });
+
+    const result = await service.findPublishedBySlug('portfolio-backend', 'ro');
+
+    expect(prismaService.project.findFirst).toHaveBeenCalledWith({
+      where: {
+        slug: 'portfolio-backend',
+        published: true,
+      },
+      include: projectTranslationsInclude,
+    });
+    expect(result).toEqual(
+      expect.objectContaining({
+        title: 'Portfolio Backend',
+        summary: 'API summary',
+        description: null,
+        contentLocale: 'en',
+        availableLocales: ['en'],
+      }),
+    );
+  });
+
   it('returns the existing project when update payload is empty', async () => {
     const existingProject = {
       id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
-      title: 'Portfolio Backend',
       slug: 'portfolio-backend',
-      summary: 'API summary',
-      description: null,
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'API summary',
+          description: null,
+        },
+      ],
       imageUrl: null,
       liveUrl: null,
       repositoryUrl: null,
@@ -142,10 +262,15 @@ describe('ProjectsService', () => {
   it('maps nullable fields when updating a project', async () => {
     const existingProject = {
       id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
-      title: 'Portfolio Backend',
       slug: 'portfolio-backend',
-      summary: 'API summary',
-      description: 'Old description',
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'API summary',
+          description: 'Old description',
+        },
+      ],
       imageUrl: null,
       liveUrl: 'https://portfolio.example.com',
       repositoryUrl: 'https://github.com/example/portfolio-backend',
@@ -160,14 +285,40 @@ describe('ProjectsService', () => {
     prismaService.project.findUnique.mockResolvedValue(existingProject);
     prismaService.project.update.mockResolvedValue({
       ...existingProject,
-      description: null,
       liveUrl: null,
       repositoryUrl: null,
       projectDate: null,
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'Updated summary',
+          description: null,
+        },
+        {
+          locale: 'ro',
+          title: 'Backend portofoliu',
+          summary: 'Rezumat actualizat',
+          description: 'Descriere in romana',
+        },
+      ],
     });
 
     await service.update(existingProject.id, {
-      description: null,
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'Updated summary',
+          description: null,
+        },
+        {
+          locale: 'ro',
+          title: 'Backend portofoliu',
+          summary: 'Rezumat actualizat',
+          description: 'Descriere in romana',
+        },
+      ],
       liveUrl: null,
       repositoryUrl: null,
       projectDate: null,
@@ -178,21 +329,43 @@ describe('ProjectsService', () => {
         id: existingProject.id,
       },
       data: {
-        description: null,
+        translations: {
+          deleteMany: {},
+          create: [
+            {
+              locale: 'en',
+              title: 'Portfolio Backend',
+              summary: 'Updated summary',
+              description: null,
+            },
+            {
+              locale: 'ro',
+              title: 'Backend portofoliu',
+              summary: 'Rezumat actualizat',
+              description: 'Descriere in romana',
+            },
+          ],
+        },
         liveUrl: null,
         repositoryUrl: null,
         projectDate: null,
       },
+      include: projectTranslationsInclude,
     });
   });
 
   it('uploads a project image, updates the project, and deletes the previous managed file', async () => {
     const existingProject = {
       id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
-      title: 'Portfolio Backend',
       slug: 'portfolio-backend',
-      summary: 'API summary',
-      description: null,
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'API summary',
+          description: null,
+        },
+      ],
       imageUrl: '/uploads/project-images/old-file.png',
       liveUrl: null,
       repositoryUrl: null,
@@ -237,6 +410,7 @@ describe('ProjectsService', () => {
       data: {
         imageUrl: '/uploads/project-images/new-file.png',
       },
+      include: projectTranslationsInclude,
     });
     expect(uploadsService.deleteManagedFile).toHaveBeenCalledWith(
       '/uploads/project-images/old-file.png',
@@ -247,10 +421,15 @@ describe('ProjectsService', () => {
   it('removes the project image and clears the stored URL', async () => {
     const existingProject = {
       id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
-      title: 'Portfolio Backend',
       slug: 'portfolio-backend',
-      summary: 'API summary',
-      description: null,
+      translations: [
+        {
+          locale: 'en',
+          title: 'Portfolio Backend',
+          summary: 'API summary',
+          description: null,
+        },
+      ],
       imageUrl: '/uploads/project-images/old-file.png',
       liveUrl: null,
       repositoryUrl: null,
@@ -278,6 +457,7 @@ describe('ProjectsService', () => {
       data: {
         imageUrl: null,
       },
+      include: projectTranslationsInclude,
     });
     expect(uploadsService.deleteManagedFile).toHaveBeenCalledWith(
       existingProject.imageUrl,

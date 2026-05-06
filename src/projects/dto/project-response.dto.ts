@@ -1,24 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { supportedProjectLocales } from '../project-locales';
+import { ProjectTranslationResponseDto } from './project-translation.dto';
 
-export class ProjectResponseDto {
+class BaseProjectResponseDto {
   @ApiProperty({
     format: 'uuid',
   })
   id: string;
 
   @ApiProperty()
-  title: string;
-
-  @ApiProperty()
   slug: string;
-
-  @ApiProperty()
-  summary: string;
-
-  @ApiPropertyOptional({
-    nullable: true,
-  })
-  description?: string | null;
 
   @ApiPropertyOptional({
     nullable: true,
@@ -60,4 +51,38 @@ export class ProjectResponseDto {
 
   @ApiProperty()
   updatedAt: Date;
+}
+
+export class PublicProjectResponseDto extends BaseProjectResponseDto {
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty()
+  summary: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+  })
+  description?: string | null;
+
+  @ApiProperty({
+    enum: supportedProjectLocales,
+    enumName: 'ProjectLocale',
+  })
+  contentLocale: string;
+
+  @ApiProperty({
+    enum: supportedProjectLocales,
+    enumName: 'ProjectLocale',
+    isArray: true,
+  })
+  availableLocales: string[];
+}
+
+export class AdminProjectResponseDto extends BaseProjectResponseDto {
+  @ApiProperty({
+    type: ProjectTranslationResponseDto,
+    isArray: true,
+  })
+  translations: ProjectTranslationResponseDto[];
 }

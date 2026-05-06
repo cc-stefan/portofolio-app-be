@@ -24,6 +24,16 @@ export function normalizeProjectSlug(value: unknown): unknown {
   return slugifyProjectValue(value);
 }
 
+export function normalizeProjectLocale(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  return normalized.length > 0 ? normalized : undefined;
+}
+
 export function normalizeProjectStringArray(value: unknown): unknown {
   if (!Array.isArray(value)) {
     return value;

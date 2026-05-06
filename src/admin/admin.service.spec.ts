@@ -36,13 +36,20 @@ describe('AdminService', () => {
     const recentProjects = [
       {
         id: '99690f9a-4fdd-4334-bfea-8d09aef08103',
-        title: 'Portfolio Backend',
         slug: 'portfolio-backend',
         published: true,
         featured: true,
         imageUrl: '/uploads/project-images/portfolio-backend.png',
         createdAt: new Date('2026-04-25T09:00:00.000Z'),
         updatedAt: new Date('2026-04-26T09:00:00.000Z'),
+        translations: [
+          {
+            locale: 'en',
+            title: 'Portfolio Backend',
+            summary: 'API summary',
+            description: null,
+          },
+        ],
       },
     ];
     const recentUsers = [
@@ -97,13 +104,23 @@ describe('AdminService', () => {
       orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
       select: {
         id: true,
-        title: true,
         slug: true,
         published: true,
         featured: true,
         imageUrl: true,
         createdAt: true,
         updatedAt: true,
+        translations: {
+          select: {
+            locale: true,
+            title: true,
+            summary: true,
+            description: true,
+          },
+          orderBy: {
+            locale: 'asc',
+          },
+        },
       },
     });
     expect(prismaService.user.findMany).toHaveBeenCalledWith({

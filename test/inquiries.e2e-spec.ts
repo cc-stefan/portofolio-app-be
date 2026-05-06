@@ -209,20 +209,18 @@ describe('AdminInquiriesController (e2e)', () => {
   });
 
   it('updates inquiry status, read state, and notes for the admin inbox', async () => {
-    jest
-      .spyOn(prismaService.inquiry, 'findUnique')
-      .mockResolvedValueOnce({
-        id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
-        name: 'Jane Doe',
-        email: 'jane@example.com',
-        message:
-          'I would like to discuss a backend-focused role and a potential contract engagement.',
-        status: 'NEW',
-        isRead: false,
-        adminNotes: null,
-        createdAt: new Date('2026-04-30T10:30:00.000Z'),
-        updatedAt: new Date('2026-04-30T10:30:00.000Z'),
-      } as never);
+    jest.spyOn(prismaService.inquiry, 'findUnique').mockResolvedValueOnce({
+      id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      message:
+        'I would like to discuss a backend-focused role and a potential contract engagement.',
+      status: 'NEW',
+      isRead: false,
+      adminNotes: null,
+      createdAt: new Date('2026-04-30T10:30:00.000Z'),
+      updatedAt: new Date('2026-04-30T10:30:00.000Z'),
+    } as never);
     jest.spyOn(prismaService.inquiry, 'update').mockResolvedValue({
       id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
       name: 'Jane Doe',
@@ -270,20 +268,18 @@ describe('AdminInquiriesController (e2e)', () => {
   });
 
   it('deletes an inquiry from the admin inbox', async () => {
-    jest
-      .spyOn(prismaService.inquiry, 'findUnique')
-      .mockResolvedValueOnce({
-        id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
-        name: 'Jane Doe',
-        email: 'jane@example.com',
-        message:
-          'I would like to discuss a backend-focused role and a potential contract engagement.',
-        status: 'ARCHIVED',
-        isRead: true,
-        adminNotes: null,
-        createdAt: new Date('2026-04-30T10:30:00.000Z'),
-        updatedAt: new Date('2026-04-30T10:30:00.000Z'),
-      } as never);
+    jest.spyOn(prismaService.inquiry, 'findUnique').mockResolvedValueOnce({
+      id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
+      name: 'Jane Doe',
+      email: 'jane@example.com',
+      message:
+        'I would like to discuss a backend-focused role and a potential contract engagement.',
+      status: 'ARCHIVED',
+      isRead: true,
+      adminNotes: null,
+      createdAt: new Date('2026-04-30T10:30:00.000Z'),
+      updatedAt: new Date('2026-04-30T10:30:00.000Z'),
+    } as never);
     jest.spyOn(prismaService.inquiry, 'delete').mockResolvedValue({
       id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
       name: 'Jane Doe',

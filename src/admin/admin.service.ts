@@ -1,16 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { projectTranslationSelect } from '../projects/project-records';
 
 const recentProjectsSelect = {
   id: true,
-  title: true,
   slug: true,
   published: true,
   featured: true,
   imageUrl: true,
   createdAt: true,
   updatedAt: true,
+  translations: {
+    select: projectTranslationSelect,
+    orderBy: {
+      locale: 'asc',
+    },
+  },
 } satisfies Prisma.ProjectSelect;
 
 const recentUsersSelect = {
