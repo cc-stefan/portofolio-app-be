@@ -1,348 +1,358 @@
 # Backend Construction Steps
 
-This is the clean construction order for this backend from zero to the current baseline. It is the recommended sequence, without the false starts or corrective steps.
+This is the recommended construction order for the backend from zero to the current system. It reflects the real feature set now in the repo:
 
-## 1. Bootstrap the NestJS project
+- auth with refresh tokens
+- admin-only project and inquiry management
+- image uploads
+- public project APIs
+- normalized multilingual project content
 
-Start with a plain NestJS app using `pnpm`.
+## 1. Bootstrap the NestJS app
 
-```bash
-pnpm create nestjs portfolio-app-be
-```
-
-Keep the initial structure small:
+Start with a minimal NestJS project and keep the initial surface small:
 
 - `src/main.ts`
 - `src/app.module.ts`
 - `src/app.controller.ts`
 - `src/app.service.ts`
 
-The goal at this stage is only to have a working Nest application that can build and run.
+The goal here is only a working app that runs and builds.
 
-## 2. Install the backend foundation packages
+## 2. Install the architectural dependencies up front
 
-Add the packages that define the architecture before writing feature code.
-
-Core application packages:
+Core:
 
 ```bash
 pnpm add @nestjs/config class-validator class-transformer
 ```
 
-Authentication packages:
+Auth:
 
 ```bash
 pnpm add @nestjs/jwt @nestjs/passport passport passport-jwt passport-local bcrypt
 pnpm add -D @types/passport @types/passport-jwt @types/passport-local @types/bcrypt
 ```
 
-Database packages:
+Database:
 
 ```bash
 pnpm add @prisma/client @prisma/adapter-pg pg dotenv
 pnpm add -D prisma @types/pg
 ```
 
-Documentation packages:
+Docs and uploads:
 
 ```bash
 pnpm add @nestjs/swagger swagger-ui-express
 ```
 
-## 3. Set up local infrastructure first
+## 3. Set up local infrastructure before feature work
 
-Create the local database setup before adding application data access.
-
-Files to add:
+Create:
 
 - `docker-compose.yml`
 - `.env.example`
-- `.env`
 - `prisma.config.ts`
 
-Use PostgreSQL 16 in Docker and expose it on `5433` to avoid conflicts with a machine-local PostgreSQL instance.
+Use PostgreSQL 16 on `5433` so local machine Postgres is not a blocker.
 
-Recommended environment values:
+Recommended local env:
 
 ```env
 NODE_ENV=development
 APP_HOST=0.0.0.0
 PORT=3001
 FRONTEND_URL=http://localhost:3000
+UPLOAD_DIR=uploads
+UPLOAD_URL_PREFIX=/uploads
 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/portfolio_app?schema=public
 JWT_SECRET=replace-this-with-a-long-random-secret
 JWT_EXPIRES_IN=7d
+JWT_REFRESH_SECRET=replace-this-with-a-different-long-random-secret
+JWT_REFRESH_EXPIRES_IN=30d
 ```
 
-Start the database immediately after creating the compose file:
+Start the database as soon as the compose file exists:
 
 ```bash
 pnpm db:up
 ```
 
-## 4. Configure global application behavior
+## 4. Configure global app behavior
 
-Create the global bootstrap behavior before adding modules.
+Create the application shell before adding modules.
 
-Files to add:
+Files:
 
 - `src/setup-app.ts`
-- `src/common/config/env.validation.ts`
+- `src/setup-swagger.ts`
+- `src/common/validation/validation-exception.factory.ts`
 
-This layer should handle:
+This layer should define:
 
 - global `/api` prefix
-- CORS using `FRONTEND_URL`
-- global `ValidationPipe`
-- environment validation with sensible defaults
+- CORS from `FRONTEND_URL`
+- global validation
+- static serving for uploaded assets
+- Swagger in non-production environments
 
-Then wire `ConfigModule.forRoot()` into `AppModule`.
+## 5. Define the Prisma schema in stable ownership layers
 
-## 5. Define the database contract in Prisma
+Add Prisma models in this order:
 
-Create the Prisma schema before writing services.
+1. `User`
+2. `Project`
+3. `Inquiry`
+4. `ProjectTranslation`
 
-The first stable schema should contain:
+That keeps the multilingual project design as a refinement on a stable project identity model, not a premature complication.
 
-- `UserRole` enum with only `USER` and `ADMIN`
-- `User` model
-- UUID primary key
-- email uniqueness
-- hashed password storage
-- optional first and last name
-- timestamps
+Current stable content model:
 
-Recommended model:
+- `projects` stores shared metadata
+- `project_translations` stores manual localized content by locale
 
-```prisma
-enum UserRole {
-  USER
-  ADMIN
-}
+Important principle:
 
-model User {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email     String   @unique
-  password  String
-  firstName String?  @map("first_name")
-  lastName  String?  @map("last_name")
-  role      UserRole @default(USER)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+- never model localized text as `titleEn`, `titleRo`, and similar field proliferation
 
-  @@map("users")
-}
-```
+## 6. Generate Prisma client and create migrations incrementally
 
-## 6. Generate the Prisma client and create the first migration
-
-After the schema is defined, generate the client and create the initial migration.
+After each schema layer:
 
 ```bash
 pnpm prisma:generate
-pnpm prisma:migrate:dev --name init
+pnpm prisma:migrate:dev
 ```
 
-At this point the database becomes the source of truth for the initial structure.
+Keep migrations small and explicit. The translation-table change should be its own migration, including backfill from the previous single-language columns.
 
 ## 7. Add Prisma to NestJS
 
-Create a dedicated Prisma integration layer.
-
-Files to add:
+Create:
 
 - `src/prisma/prisma.module.ts`
 - `src/prisma/prisma.service.ts`
 
 Requirements:
 
-- use `PrismaPg` from `@prisma/adapter-pg`
-- keep Prisma global inside Nest
-- disconnect cleanly on module destroy
-
-This gives every module a stable database access point.
+- use `PrismaPg`
+- make Prisma globally available inside Nest
+- disconnect cleanly
 
 ## 8. Build the users layer before auth
 
-Create the users service before the auth service, because auth depends on user persistence.
-
-Files to add:
+Create:
 
 - `src/users/users.module.ts`
 - `src/users/users.service.ts`
 
-The users layer should support:
+The users layer should own:
 
 - create user
 - find by email
 - find by id
-- remove password from returned API objects
+- remove password from returned objects
 - upsert admin user
-
-Registration should default to `USER`. Admin creation should be explicit.
 
 ## 9. Build authentication
 
-After the users layer exists, add the auth module.
-
-Files to add:
+Create:
 
 - `src/auth/auth.module.ts`
 - `src/auth/auth.controller.ts`
 - `src/auth/auth.service.ts`
-- `src/auth/dto/register.dto.ts`
-- `src/auth/dto/login.dto.ts`
-- `src/auth/interfaces/jwt-payload.interface.ts`
-- `src/auth/strategies/local.strategy.ts`
-- `src/auth/strategies/jwt.strategy.ts`
-- `src/auth/guards/local-auth.guard.ts`
-- `src/auth/guards/jwt-auth.guard.ts`
-- `src/auth/decorators/current-user.decorator.ts`
+- DTOs
+- JWT and local strategies
+- auth guards
+- current-user decorator
 
-Initial API surface:
+The first stable auth surface:
 
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 
+Then extend it with:
+
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `GET /api/auth/admin/me`
+
 Rules:
 
 - hash passwords with `bcrypt`
-- never expose the password field in responses
-- sign JWTs with `JWT_SECRET`
-- keep registration public
-- keep login credential-based
+- store only a hashed refresh token
+- rotate refresh tokens
 
-## 10. Add role-based access control
+## 10. Add RBAC before admin features
 
-Once JWT auth works, add RBAC.
-
-Files to add:
+Create:
 
 - `src/auth/decorators/roles.decorator.ts`
 - `src/auth/guards/roles.guard.ts`
 
-Apply roles only after JWT authentication is in place.
+The admin surface should depend on verified JWT auth first, then role enforcement.
 
-The first protected admin route should be:
+## 11. Add an admin bootstrap CLI
 
-- `GET /api/auth/admin/me`
-
-This verifies that:
-
-- the JWT contains the role
-- the guard reads metadata correctly
-- `ADMIN` access is enforced
-
-## 11. Add refresh token rotation and logout
-
-After access-token auth works, add refresh-token lifecycle management.
-
-Requirements:
-
-- store only a hashed refresh token in the database
-- issue both `accessToken` and `refreshToken` on register and login
-- add a `POST /api/auth/refresh` endpoint
-- rotate the refresh token on every refresh
-- add a `POST /api/auth/logout` endpoint that clears the stored refresh token hash
-
-This keeps the token flow production-oriented without requiring cookies yet.
-
-## 12. Add an admin bootstrap command
-
-Create a CLI command to create or promote an admin user without relying on a pre-existing admin UI.
-
-File to add:
+Create:
 
 - `src/scripts/create-admin.ts`
 
-Script command:
+Command:
 
 ```bash
 pnpm admin:create -- --email admin@example.com --password StrongPass123 --first-name Admin --last-name User
 ```
 
-This command should:
+This removes any dependency on a pre-existing admin UI for first access.
 
-- create the user if it does not exist
-- update the user if it already exists
-- force the role to `ADMIN`
-- hash the provided password
+## 12. Add public project read APIs before admin project writing
 
-## 13. Add Swagger only after the API surface is stable enough
+Create the public read contract before the admin mutation contract.
 
-Wire Swagger after the current routes and DTOs exist.
+Files:
 
-Files to add:
+- `src/projects/projects.module.ts`
+- `src/projects/projects.controller.ts`
+- `src/projects/projects.service.ts`
+- read response DTOs
 
-- `src/setup-swagger.ts`
-- Swagger response DTOs for documented endpoints
+Public reads should support:
 
-Expose:
+- published project list
+- published project detail by slug
+- optional locale query parameter
+- fallback to default locale when the requested translation is missing
 
-- Swagger UI at `/api/docs`
-- OpenAPI JSON at `/api/docs-json`
+This is the contract the SSR frontend consumes.
 
-Annotate:
+## 13. Add admin project management
 
-- controllers with tags
+After public reads are stable, add admin write flows:
+
+- create project
+- list all projects
+- get project by id
+- update project
+- delete project
+
+Keep the design normalized:
+
+- shared project fields live on `Project`
+- localized content is passed as a `translations` array
+
+DTO rules should enforce:
+
+- supported locales only
+- unique locale entries
+- required default locale content
+
+## 14. Add dedicated project image handling
+
+Do not mix file uploads into the JSON project payload.
+
+Add:
+
+- upload config
+- uploads service
+- multipart endpoint for `POST /api/admin/projects/:id/image`
+- remove endpoint for `DELETE /api/admin/projects/:id/image`
+
+This keeps the project content model and file lifecycle separate.
+
+## 15. Add inquiry intake and inquiry admin tooling
+
+Build the contact flow as its own module:
+
+- public inquiry creation
+- admin inquiry inbox
+- detail view support
+- state transitions such as `NEW`, `IN_REVIEW`, `RESOLVED`, `ARCHIVED`
+
+This work is orthogonal to project content and should remain isolated.
+
+## 16. Add the admin dashboard only after projects and inquiries exist
+
+The dashboard should aggregate existing modules rather than invent its own source of truth.
+
+Current dashboard responsibilities:
+
+- project counts
+- inquiry counts
+- user counts
+- recent projects
+- recent users
+
+## 17. Add seed data only after the schema is stable enough
+
+Create or maintain:
+
+- `scripts/seed.sql`
+
+The seed should reflect the real schema of the moment:
+
+- current project table shape
+- current translation table shape
+- current admin credentials
+
+For the current system, the seed should populate:
+
+- baseline admin user
+- shared project metadata
+- `en` and `ro` translations for seeded projects
+
+## 18. Add Swagger once the DTOs are real
+
+Document:
+
 - request DTOs
-- bearer-auth protected routes
 - response DTOs
+- bearer auth requirements
+- multipart upload endpoints
+- locale-aware public project queries
 
-This gives a usable API contract instead of a partial skeleton.
+Swagger should describe the actual API contract, not a scaffold guess.
 
-## 14. Keep the build output clean
+## 19. Keep validation output frontend-friendly
 
-Use a dedicated Nest build config for application code only.
+Return field-level validation errors as flattened `path` arrays so the frontend can map them directly into form state.
 
-In `tsconfig.build.json`:
+That matters even more once localized fields become nested, for example:
 
-- set `rootDir` to `./src`
-- include only `src/**/*.ts`
-- write `tsBuildInfoFile` into `./dist/tsconfig.build.tsbuildinfo`
+- `translations.0.title`
+- `translations.1.summary`
 
-This keeps:
+## 20. Verify after every major layer
 
-- source in `src/`
-- compiled output in `dist/`
-- watch mode consistent
-
-## 15. Verify every stage before moving on
-
-After each major layer, run the validation commands:
+Use these checks continuously:
 
 ```bash
-pnpm exec eslint "src/**/*.ts" "test/**/*.ts"
 pnpm build
-pnpm exec jest --runInBand
-pnpm exec jest --config ./test/jest-e2e.json --runInBand
+pnpm test --runInBand
+pnpm test:e2e
+pnpm prisma:generate
+pnpm prisma:studio
 ```
 
-This keeps the project stable while the architecture grows.
+And for migration-sensitive changes:
 
-## 16. Current baseline complete
+```bash
+pnpm exec prisma migrate deploy
+docker exec -i portfolio-postgres psql -U postgres -d portfolio_app -v ON_ERROR_STOP=1 < scripts/seed.sql
+```
 
-At the end of this sequence, the backend should have:
+## 21. Preserve clear module boundaries
 
-- NestJS application bootstrap
-- validated env configuration
-- PostgreSQL in Docker
-- Prisma 7 configured correctly
-- UUID user IDs
-- JWT auth
-- refresh-token rotation and logout
-- `USER` and `ADMIN` roles
-- role-based guards
-- admin bootstrap script
-- Swagger docs
+As the system grows, keep ownership obvious:
 
-## 17. Next ideal construction order after this point
+- `auth` owns identity and tokens
+- `users` owns user persistence
+- `projects` owns project metadata and translations
+- `uploads` owns managed files
+- `inquiries` owns contact-form persistence and admin workflow
+- `admin` owns cross-module summaries, not raw data duplication
 
-The next clean sequence should be:
-
-1. Refresh token flow.
-2. Admin module for dashboard operations.
-3. Project module for portfolio entries.
-4. File upload support for assets.
-5. Deployment configuration.
+That boundary discipline is what keeps the current feature set scalable.
