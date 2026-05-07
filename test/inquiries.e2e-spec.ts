@@ -10,6 +10,7 @@ import { configureApp } from '../src/setup-app';
 
 describe('InquiriesController (e2e)', () => {
   let app: INestApplication;
+  let httpServer: Parameters<typeof request>[0];
   let prismaService: PrismaService;
 
   beforeEach(async () => {
@@ -20,11 +21,13 @@ describe('InquiriesController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     configureApp(app);
     await app.init();
+    httpServer = app.getHttpServer() as Parameters<typeof request>[0];
     prismaService = app.get(PrismaService);
   });
 
   it('accepts a valid inquiry and returns the created receipt payload', async () => {
-    jest.spyOn(prismaService.inquiry, 'create').mockResolvedValue({
+    const createSpy = jest.spyOn(prismaService.inquiry, 'create');
+    createSpy.mockResolvedValue({
       id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
       name: 'Jane Doe',
       email: 'jane@example.com',
@@ -34,7 +37,7 @@ describe('InquiriesController (e2e)', () => {
       updatedAt: new Date('2026-04-30T10:30:00.000Z'),
     } as never);
 
-    await request(app.getHttpServer())
+    await request(httpServer)
       .post('/api/inquiries')
       .send({
         name: '  Jane Doe  ',
@@ -48,7 +51,7 @@ describe('InquiriesController (e2e)', () => {
         receivedAt: '2026-04-30T10:30:00.000Z',
       });
 
-    expect(prismaService.inquiry.create).toHaveBeenCalledWith({
+    expect(createSpy).toHaveBeenCalledWith({
       data: {
         name: 'Jane Doe',
         email: 'jane@example.com',
@@ -59,7 +62,7 @@ describe('InquiriesController (e2e)', () => {
   });
 
   it('returns field-level validation errors for invalid inquiry payloads', async () => {
-    await request(app.getHttpServer())
+    await request(httpServer)
       .post('/api/inquiries')
       .send({
         name: 'A',
@@ -98,6 +101,7 @@ describe('InquiriesController (e2e)', () => {
 
 describe('AdminInquiriesController (e2e)', () => {
   let app: INestApplication;
+  let httpServer: Parameters<typeof request>[0];
   let prismaService: PrismaService;
 
   beforeEach(async () => {
@@ -135,11 +139,13 @@ describe('AdminInquiriesController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     configureApp(app);
     await app.init();
+    httpServer = app.getHttpServer() as Parameters<typeof request>[0];
     prismaService = app.get(PrismaService);
   });
 
   it('lists inquiries for the admin inbox using status-priority ordering', async () => {
-    jest.spyOn(prismaService.inquiry, 'findMany').mockResolvedValue([
+    const findManySpy = jest.spyOn(prismaService.inquiry, 'findMany');
+    findManySpy.mockResolvedValue([
       {
         id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
         name: 'Jane Doe',
@@ -154,7 +160,7 @@ describe('AdminInquiriesController (e2e)', () => {
       },
     ] as never);
 
-    await request(app.getHttpServer())
+    await request(httpServer)
       .get('/api/admin/inquiries')
       .expect(200)
       .expect([
@@ -172,7 +178,7 @@ describe('AdminInquiriesController (e2e)', () => {
         },
       ]);
 
-    expect(prismaService.inquiry.findMany).toHaveBeenCalledWith({
+    expect(findManySpy).toHaveBeenCalledWith({
       orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
     });
   });
@@ -191,7 +197,7 @@ describe('AdminInquiriesController (e2e)', () => {
       updatedAt: new Date('2026-04-30T11:00:00.000Z'),
     } as never);
 
-    await request(app.getHttpServer())
+    await request(httpServer)
       .get('/api/admin/inquiries/4655853c-01a8-46f7-a685-cd45e6b2f3bd')
       .expect(200)
       .expect({
@@ -221,7 +227,8 @@ describe('AdminInquiriesController (e2e)', () => {
       createdAt: new Date('2026-04-30T10:30:00.000Z'),
       updatedAt: new Date('2026-04-30T10:30:00.000Z'),
     } as never);
-    jest.spyOn(prismaService.inquiry, 'update').mockResolvedValue({
+    const updateSpy = jest.spyOn(prismaService.inquiry, 'update');
+    updateSpy.mockResolvedValue({
       id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
       name: 'Jane Doe',
       email: 'jane@example.com',
@@ -234,7 +241,7 @@ describe('AdminInquiriesController (e2e)', () => {
       updatedAt: new Date('2026-04-30T12:00:00.000Z'),
     } as never);
 
-    await request(app.getHttpServer())
+    await request(httpServer)
       .patch('/api/admin/inquiries/4655853c-01a8-46f7-a685-cd45e6b2f3bd')
       .send({
         status: 'RESOLVED',
@@ -255,7 +262,7 @@ describe('AdminInquiriesController (e2e)', () => {
         updatedAt: '2026-04-30T12:00:00.000Z',
       });
 
-    expect(prismaService.inquiry.update).toHaveBeenCalledWith({
+    expect(updateSpy).toHaveBeenCalledWith({
       where: {
         id: '4655853c-01a8-46f7-a685-cd45e6b2f3bd',
       },
@@ -293,13 +300,13 @@ describe('AdminInquiriesController (e2e)', () => {
       updatedAt: new Date('2026-04-30T10:30:00.000Z'),
     } as never);
 
-    await request(app.getHttpServer())
+    await request(httpServer)
       .delete('/api/admin/inquiries/4655853c-01a8-46f7-a685-cd45e6b2f3bd')
       .expect(204);
   });
 
   it('returns field-level validation errors for invalid admin updates', async () => {
-    await request(app.getHttpServer())
+    await request(httpServer)
       .patch('/api/admin/inquiries/4655853c-01a8-46f7-a685-cd45e6b2f3bd')
       .send({
         status: 'DONE',

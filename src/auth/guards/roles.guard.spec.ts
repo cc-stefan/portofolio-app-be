@@ -24,7 +24,7 @@ describe('RolesGuard', () => {
                 },
         }),
       }),
-    } as ExecutionContext;
+    } as unknown as ExecutionContext;
   }
 
   it('allows access when no roles are required', () => {

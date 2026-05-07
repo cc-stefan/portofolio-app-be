@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: portfolio-api
+    runtime: node
+    branch: main
+    buildCommand: corepack enable && corepack prepare pnpm@9 --activate && pnpm install --frozen-lockfile && pnpm prisma migrate deploy && pnpm build
+    startCommand: corepack enable && corepack prepare pnpm@9 --activate && pnpm start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22

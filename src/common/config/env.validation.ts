@@ -30,6 +30,10 @@ class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  CORS_ORIGIN?: string;
+
+  @IsOptional()
+  @IsString()
   UPLOAD_DIR: string = 'uploads';
 
   @IsOptional()
@@ -55,6 +59,30 @@ class EnvironmentVariables {
   @IsOptional()
   @IsString()
   DATABASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  R2_ACCOUNT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  R2_ACCESS_KEY_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  R2_SECRET_ACCESS_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  R2_BUCKET_NAME?: string;
+
+  @IsOptional()
+  @IsString()
+  R2_PUBLIC_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  R2_ENDPOINT?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>) {
@@ -90,6 +118,29 @@ export function validateEnv(config: Record<string, unknown>) {
 
   if (validatedConfig.NODE_ENV !== 'test' && !validatedConfig.DATABASE_URL) {
     messages.push('DATABASE_URL: DATABASE_URL is required outside tests');
+  }
+
+  const r2Entries = [
+    ['R2_ACCOUNT_ID', validatedConfig.R2_ACCOUNT_ID],
+    ['R2_ACCESS_KEY_ID', validatedConfig.R2_ACCESS_KEY_ID],
+    ['R2_SECRET_ACCESS_KEY', validatedConfig.R2_SECRET_ACCESS_KEY],
+    ['R2_BUCKET_NAME', validatedConfig.R2_BUCKET_NAME],
+    ['R2_PUBLIC_URL', validatedConfig.R2_PUBLIC_URL],
+    ['R2_ENDPOINT', validatedConfig.R2_ENDPOINT],
+  ] as const;
+  const configuredR2Entries = r2Entries.filter(([, value]) => Boolean(value));
+
+  if (
+    configuredR2Entries.length > 0 &&
+    configuredR2Entries.length < r2Entries.length
+  ) {
+    const missingR2Keys = r2Entries
+      .filter(([, value]) => !value)
+      .map(([key]) => key);
+
+    messages.push(
+      `R2 configuration is incomplete. Missing: ${missingR2Keys.join(', ')}`,
+    );
   }
 
   if (messages.length > 0) {

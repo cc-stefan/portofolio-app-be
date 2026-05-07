@@ -8,7 +8,11 @@ import {
 
 export function configureApp(app: INestApplication): void {
   const expressApp = app as NestExpressApplication;
-  const frontendUrls = (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+  const frontendUrls = (
+    process.env.CORS_ORIGIN ??
+    process.env.FRONTEND_URL ??
+    'http://localhost:3000'
+  )
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
